@@ -1,0 +1,7 @@
+{
+  "name": "AI Focus Coach",
+  "description": "An AI-powered focus coach that uses your camera to monitor your focus during work sessions. It provides real-time voice feedback to help you stay on track and generates a summary of your most focused moments.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
