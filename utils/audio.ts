@@ -1,45 +1,46 @@
-// Function to decode base64 string to Uint8Array
-function decode(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+import { Audio } from 'expo-av';
+
+let audioModeConfigured = false;
+
+async function ensureAudioModeAsync() {
+  if (audioModeConfigured) {
+    return;
   }
-  return bytes;
-}
-
-// Function to decode raw PCM audio data into an AudioBuffer
-async function decodeAudioData(
-  data: Uint8Array,
-  ctx: AudioContext,
-  sampleRate: number,
-  numChannels: number,
-): Promise<AudioBuffer> {
-  const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length / numChannels;
-  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-
-  for (let channel = 0; channel < numChannels; channel++) {
-    const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+  try {
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+      shouldDuckAndroid: true,
+      interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DUCK_OTHERS,
+      interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
+    });
+    audioModeConfigured = true;
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('Failed to configure audio mode', error);
     }
   }
-  return buffer;
 }
 
+export async function playAudio(base64Audio: string) {
+  try {
+    await ensureAudioModeAsync();
+    const sound = new Audio.Sound();
+    const source = { uri: `data:audio/mp3;base64,${base64Audio}` };
+    await sound.loadAsync(source, { shouldPlay: true });
 
-export async function playAudio(base64Audio: string, audioContext: AudioContext) {
-    try {
-        const audioData = decode(base64Audio);
-        const audioBuffer = await decodeAudioData(audioData, audioContext, 24000, 1);
-        
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-        source.start();
-    } catch (error) {
-        console.error("Failed to play audio:", error);
+    sound.setOnPlaybackStatusUpdate(status => {
+      if (!status.isLoaded) {
+        return;
+      }
+      if (status.didJustFinish || status.isLooping === false) {
+        sound.unloadAsync().catch(() => undefined);
+      }
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('Failed to play audio', error);
     }
+  }
 }

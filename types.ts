@@ -1,5 +1,7 @@
 export type FocusStatus = 'IDLE' | 'FOCUSED' | 'DISTRACTED' | 'AWAY' | 'ANALYZING';
 
+export type AppView = 'DASHBOARD' | 'SESSION' | 'SUMMARY' | 'HISTORY';
+
 export interface FocusLogEntry {
   timestamp: string; // ISO string for serialization
   status: FocusStatus;
