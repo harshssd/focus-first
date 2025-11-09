@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Session } from '../types';
 
 const STORAGE_KEY = 'focus-session-history';
@@ -7,25 +8,39 @@ export function useSessionHistory() {
   const [sessionHistory, setSessionHistory] = useState<Session[]>([]);
 
   useEffect(() => {
-    try {
-      const storedHistory = localStorage.getItem(STORAGE_KEY);
-      if (storedHistory) {
-        setSessionHistory(JSON.parse(storedHistory));
+    let isMounted = true;
+
+    const loadHistory = async () => {
+      try {
+        const storedHistory = await AsyncStorage.getItem(STORAGE_KEY);
+        if (storedHistory && isMounted) {
+          setSessionHistory(JSON.parse(storedHistory));
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.warn('Could not load session history from AsyncStorage', error);
+        }
+        if (isMounted) {
+          setSessionHistory([]);
+        }
       }
-    } catch (error) {
-      console.error("Could not load session history from localStorage", error);
-      setSessionHistory([]);
-    }
+    };
+
+    loadHistory();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const addSessionToHistory = useCallback((newSession: Session) => {
     setSessionHistory(prevHistory => {
-      const updatedHistory = [newSession, ...prevHistory].slice(0, 50); // Keep last 50 sessions
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
-      } catch (error) {
-        console.error("Could not save session history to localStorage", error);
-      }
+      const updatedHistory = [newSession, ...prevHistory].slice(0, 50);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory)).catch(error => {
+        if (__DEV__) {
+          console.warn('Could not save session history to AsyncStorage', error);
+        }
+      });
       return updatedHistory;
     });
   }, []);

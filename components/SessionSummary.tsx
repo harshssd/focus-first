@@ -1,4 +1,6 @@
 import React from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { RefreshIcon } from './icons';
 import type { SessionSummaryData } from '../types';
 
@@ -9,38 +11,128 @@ interface SessionSummaryProps {
 
 export const SessionSummary: React.FC<SessionSummaryProps> = ({ summaryData, onReset }) => {
   const { summary, tip, frames } = summaryData;
-  return (
-    <div className="w-full max-w-3xl bg-black/20 p-6 sm:p-8 rounded-2xl shadow-lg border border-white/10 backdrop-blur-md flex flex-col items-center">
-      <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-primary to-brand-secondary mb-4">
-          Session Complete!
-      </h2>
-      <p className="text-lg text-gray-200 mb-6 text-center whitespace-pre-wrap">{summary}</p>
 
-      <div className="w-full bg-white/5 p-4 rounded-lg mb-6 text-center">
-          <h3 className="text-md font-semibold text-brand-accent mb-2">💡 Pro Tip for Improvement</h3>
-          <p className="text-gray-300">{tip}</p>
-      </div>
-      
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.heading}>Session complete</Text>
+      <Text style={styles.summary}>{summary}</Text>
+
+      <View style={styles.tipCard}>
+        <Text style={styles.tipTitle}>Pro Tip</Text>
+        <Text style={styles.tipBody}>{tip}</Text>
+      </View>
+
       {frames.length > 0 && (
-        <div className="w-full mb-6">
-          <h3 className="text-xl font-semibold mb-4 text-center">Your Focus Highlights</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        <View style={styles.framesSection}>
+          <Text style={styles.framesTitle}>Focus Highlights</Text>
+          <View style={styles.framesGrid}>
             {frames.map((frame, index) => (
-              <div key={index} className="aspect-square rounded-md overflow-hidden shadow-lg border-2 border-brand-primary/50 transition-transform duration-300 hover:scale-105">
-                <img src={frame} alt={`Focus frame ${index + 1}`} className="w-full h-full object-cover" />
-              </div>
+              <Image
+                key={index}
+                source={{ uri: frame }}
+                style={styles.frameImage}
+                resizeMode="cover"
+              />
             ))}
-          </div>
-        </div>
+          </View>
+        </View>
       )}
-      
-      <button
-        onClick={onReset}
-        className="flex items-center justify-center mt-4 px-6 py-3 bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold rounded-full shadow-lg hover:from-brand-primary/80 hover:to-brand-secondary/80 transition-all duration-300 transform hover:scale-105 text-md"
+
+      <Pressable
+        onPress={onReset}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.buttonWrapper, pressed && { opacity: 0.85 }]}
       >
-        <RefreshIcon />
-        <span className="ml-2">Back to Dashboard</span>
-      </button>
-    </div>
+        <LinearGradient colors={['#4F46E5', '#EC4899']} style={styles.button}>
+          <RefreshIcon size={18} color="#F9FAFB" />
+          <Text style={styles.buttonText}>Back to dashboard</Text>
+        </LinearGradient>
+      </Pressable>
+    </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'stretch',
+    paddingBottom: 32,
+  },
+  heading: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#F9FAFB',
+    letterSpacing: -0.4,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  summary: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#E5E7EB',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  tipCard: {
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.18)',
+    marginBottom: 24,
+  },
+  tipTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#A5B4FC',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  tipBody: {
+    fontSize: 15,
+    lineHeight: 21,
+    color: '#F1F5F9',
+  },
+  framesSection: {
+    marginBottom: 24,
+  },
+  framesTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#E5E7EB',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  framesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  frameImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.4)',
+    margin: 6,
+  },
+  buttonWrapper: {
+    alignSelf: 'center',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 999,
+    gap: 10,
+  },
+  buttonText: {
+    color: '#F9FAFB',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+  },
+});
